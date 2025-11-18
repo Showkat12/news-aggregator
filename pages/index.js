@@ -1,46 +1,41 @@
-// pages/index.js
-import useSWR from 'swr';
+import { useState, useMemo } from "react";
+import Nav from "../components/Nav";
+import NewsGrid from "../components/NewsGrid";
 
-const fetcher = (url) => fetch(url).then((r) => r.json());
+export default function Home({ initialItems }) {
+  const [q, setQ] = useState("");
 
-export default function Home() {
-  const { data, error } = useSWR(
-    '/api/items?limit=100',
-    fetcher,
-    { refreshInterval: 1000 * 60 * 5 }
-  );
+  // ensure we always work with an array
+  const list = Array.isArray(initialItems) ? initialItems : (initialItems && initialItems.items) || [];
 
-  if (error) return <div className="p-8">Error loading data.</div>;
-  if (!data) return <div className="p-8">Loading...</div>;
+  const filtered = useMemo(() => {
+    if (!q) return list;
+    return list.filter((i) =>
+      (i.title || "").toLowerCase().includes(q.toLowerCase())
+    );
+  }, [q, list]);
 
   return (
-    <main className="min-h-screen p-8">
-      <div className="max-w-4xl mx-auto glass card">
-        <h1 className="text-3xl font-semibold mb-4">News Aggregator</h1>
-
-        <div className="space-y-4">
-          {data.items.map((item) => (
-            <article key={item.id} className="glass card flex flex-col p-4">
-              <a
-                href={item.link}
-                target="_blank"
-                rel="noreferrer"
-                className="text-lg font-medium"
-              >
-                {item.title}
-              </a>
-
-              <div className="text-sm opacity-80">
-                {item.feed_title} — {item.pubDate}
-              </div>
-
-              <p className="mt-2 text-sm opacity-90">
-                {item.contentSnippet || ''}
-              </p>
-            </article>
-          ))}
-        </div>
-      </div>
+    <main>
+      <Nav onSearch={setQ} />
+      <NewsGrid items={filtered} />
     </main>
   );
+}
+
+export async function getServerSideProps() {
+  try {
+    const res = await fetch("http://localhost:3000/api/items");
+    if (!res.ok) {
+      return { props: { initialItems: [] } };
+    }
+    const payload = await res.json();
+
+    // payload might be an array (old shape) or an object { ok, items: [...] }
+    const items = Array.isArray(payload) ? payload : payload.items || [];
+
+    return { props: { initialItems: items } };
+  } catch (err) {
+    return { props: { initialItems: [] } };
+  }
 }
