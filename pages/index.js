@@ -5,8 +5,9 @@ import NewsGrid from "../components/NewsGrid";
 export default function Home({ initialItems }) {
   const [q, setQ] = useState("");
 
-  // ensure we always work with an array
-  const list = Array.isArray(initialItems) ? initialItems : (initialItems && initialItems.items) || [];
+  const list = Array.isArray(initialItems)
+    ? initialItems
+    : initialItems?.items || [];
 
   const filtered = useMemo(() => {
     if (!q) return list;
@@ -16,22 +17,21 @@ export default function Home({ initialItems }) {
   }, [q, list]);
 
   return (
-    <main>
+    <main className="min-h-screen pt-4 pb-10">
       <Nav onSearch={setQ} />
-      <NewsGrid items={filtered} />
+
+      <div className="page-container">
+        <NewsGrid items={filtered} />
+      </div>
     </main>
   );
 }
 
 export async function getServerSideProps() {
   try {
-    const res = await fetch("http://localhost:3000/api/items");
-    if (!res.ok) {
-      return { props: { initialItems: [] } };
-    }
-    const payload = await res.json();
+    const r = await fetch("http://localhost:3000/api/items");
+    const payload = await r.json();
 
-    // payload might be an array (old shape) or an object { ok, items: [...] }
     const items = Array.isArray(payload) ? payload : payload.items || [];
 
     return { props: { initialItems: items } };

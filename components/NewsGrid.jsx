@@ -1,22 +1,11 @@
-import ArticleCard from "./ArticleCard";
+import NewsCard from "./NewsCard";
 
-export default function NewsGrid({ items }) {
-  // Normalize ANY input into a clean array
-  const itemsArray = Array.isArray(items)
-    ? items
-    : (items && items.items) || [];
-
+export default function NewsGrid({ items = [] }) {
   return (
-    <div className="grid gap-6 p-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-      {itemsArray.length === 0 ? (
-        <p className="col-span-full text-center text-gray-400">
-          No articles found.
-        </p>
-      ) : (
-        itemsArray.map((item) => (
-          <ArticleCard key={item.id} item={item} />
-        ))
-      )}
-    </div>
+    <section className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-fr">
+      {items.map((it, i) => (
+        <NewsCard key={i} item={it} />
+      ))}
+    </section>
   );
 }
